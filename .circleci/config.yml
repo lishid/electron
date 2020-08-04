@@ -336,7 +336,9 @@ step-get-more-space-on-mac: &step-get-more-space-on-mac
       if [ "`uname`" == "Darwin" ]; then
         sudo mkdir -p $TMPDIR/del-target
         tmpify() {
-          sudo mv $1 $TMPDIR/del-target/$(echo $1|shasum -a 256|head -n1|cut -d " " -f1)
+          if [ -d "$1" ]; then
+            sudo mv $1 $TMPDIR/del-target/$(echo $1|shasum -a 256|head -n1|cut -d " " -f1)
+          fi
         }
         tmpify /Library/Developer/CoreSimulator
         tmpify $(xcode-select -p)/Platforms/AppleTVOS.platform
@@ -743,8 +745,6 @@ step-maybe-generate-breakpad-symbols: &step-maybe-generate-breakpad-symbols
       if [ "$GENERATE_SYMBOLS" == "true" ]; then
         cd src
         ninja -C out/Default electron:electron_symbols
-        cd out/Default/breakpad_symbols
-        find . -name \*.sym -print0 | xargs -0 npx @sentry/cli@1.51.1 difutil bundle-sources
       fi
 
 step-maybe-zip-symbols: &step-maybe-zip-symbols

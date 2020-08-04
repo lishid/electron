@@ -20,7 +20,7 @@ index 699eb3760cc6e5e8393b746ee144e057d33328db..993a4af7a8d01535a73eff6a3172c224
    // Executes script in the context of the current page and returns the value
    // that the script evaluated to with callback. Script execution can be
 diff --git a/third_party/blink/renderer/core/frame/web_local_frame_impl.cc b/third_party/blink/renderer/core/frame/web_local_frame_impl.cc
-index f8808c9931ad28b7c3a179a488c88c1f3be27924..f5229bf06d5351013f78c51c6ae1b9956b63acf6 100644
+index 392891603c7ee16829b597e9b8b019926199436b..6d2ee4aecea33859aada5215d9b75662d7a39fe9 100644
 --- a/third_party/blink/renderer/core/frame/web_local_frame_impl.cc
 +++ b/third_party/blink/renderer/core/frame/web_local_frame_impl.cc
 @@ -944,6 +944,13 @@ v8::Local<v8::Object> WebLocalFrameImpl::GlobalProxy() const {
@@ -38,7 +38,7 @@ index f8808c9931ad28b7c3a179a488c88c1f3be27924..f5229bf06d5351013f78c51c6ae1b995
    return BindingSecurity::ShouldAllowAccessToFrame(
        CurrentDOMWindow(V8PerIsolateData::MainThreadIsolate()),
 diff --git a/third_party/blink/renderer/core/frame/web_local_frame_impl.h b/third_party/blink/renderer/core/frame/web_local_frame_impl.h
-index 4c43fd1a2faf9654660b3e14a50e0791deb6958f..ead48b479875bb95a879790d8d824b75a4c074b7 100644
+index 94a26b4f78280a91389ae607e96578e7a09d5492..11f2e2155fa7250215c2b38a9f3b0f3c57f81621 100644
 --- a/third_party/blink/renderer/core/frame/web_local_frame_impl.h
 +++ b/third_party/blink/renderer/core/frame/web_local_frame_impl.h
 @@ -162,6 +162,8 @@ class CORE_EXPORT WebLocalFrameImpl final
