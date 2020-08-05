@@ -301,6 +301,15 @@ bool NativeWindowViews::PreHandleMSG(UINT message,
       }
       return false;
     }
+    case WM_NCACTIVATE: {
+      // Chromium renders titlebar as active as long as there is a views window
+      // active, which is different from most other win32 apps. We prevent this
+      // behavior by overriding the WM_NCACTIVATE message to default behavior.
+      // See also https://github.com/electron/electron/issues/24647.
+      *result =
+          ::DefWindowProc(GetAcceleratedWidget(), message, w_param, l_param);
+      return true;
+    }
     default:
       return false;
   }
