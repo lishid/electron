@@ -8,6 +8,7 @@
 
 #include <utility>
 
+#include "base/barrier_closure.h"
 #include "base/command_line.h"
 #include "base/files/file_path.h"
 #include "base/no_destructor.h"
@@ -28,6 +29,8 @@
 #include "components/proxy_config/proxy_config_pref_names.h"
 #include "content/browser/blob_storage/chrome_blob_storage_context.h"  // nogncheck
 #include "content/public/browser/browser_thread.h"
+#include "content/public/browser/cors_origin_pattern_setter.h"
+#include "content/public/browser/shared_cors_origin_access_list.h"
 #include "content/public/browser/storage_partition.h"
 #include "mojo/public/cpp/bindings/self_owned_receiver.h"
 #include "net/base/escape.h"
@@ -106,6 +109,8 @@ ElectronBrowserContext::ElectronBrowserContext(const std::string& partition,
       storage_policy_(new SpecialStoragePolicy),
       protocol_registry_(new ProtocolRegistry),
       in_memory_(in_memory),
+      shared_cors_origin_access_list_(
+          content::SharedCorsOriginAccessList::Create()),
       ssl_config_(network::mojom::SSLConfig::New()),
       weak_factory_(this) {
   // TODO(nornagon): remove once https://crbug.com/1048822 is fixed.
@@ -435,9 +440,30 @@ void ElectronBrowserContext::SetCorsOriginAccessListForOrigin(
     std::vector<network::mojom::CorsOriginPatternPtr> allow_patterns,
     std::vector<network::mojom::CorsOriginPatternPtr> block_patterns,
     base::OnceClosure closure) {
-  // TODO(nornagon): actually set the CORS access lists. This is called from
-  // extensions/browser/renderer_startup_helper.cc.
-  base::ThreadTaskRunnerHandle::Get()->PostTask(FROM_HERE, std::move(closure));
+  auto barrier_closure = BarrierClosure(2, std::move(closure));
+
+  // Keep storage partitions' NetworkContexts synchronized.
+  auto cors_pattern_setter =
+      base::MakeRefCounted<content::CorsOriginPatternSetter>(
+          source_origin,
+          content::CorsOriginPatternSetter::ClonePatterns(allow_patterns),
+          content::CorsOriginPatternSetter::ClonePatterns(block_patterns),
+          barrier_closure);
+  ForEachStoragePartition(
+      this, base::BindRepeating(&content::CorsOriginPatternSetter::SetLists,
+                                base::RetainedRef(cors_pattern_setter.get())));
+
+  // Keep the per-context access list up to date so that we can use this to
+  // restore NetworkContext settings at anytime, e.g. on restarting the
+  // network service.
+  shared_cors_origin_access_list_->SetForOrigin(
+      source_origin, std::move(allow_patterns), std::move(block_patterns),
+      barrier_closure);
+}
+
+content::SharedCorsOriginAccessList*
+ElectronBrowserContext::GetSharedCorsOriginAccessList() {
+  return shared_cors_origin_access_list_.get();
 }
 
 ResolveProxyHelper* ElectronBrowserContext::GetResolveProxyHelper() {

@@ -119,6 +119,7 @@ class ElectronBrowserContext
       std::vector<network::mojom::CorsOriginPatternPtr> allow_patterns,
       std::vector<network::mojom::CorsOriginPatternPtr> block_patterns,
       base::OnceClosure closure) override;
+  content::SharedCorsOriginAccessList* GetSharedCorsOriginAccessList() override;
 
   CookieChangeNotifier* cookie_change_notifier() const {
     return cookie_change_notifier_.get();
@@ -193,6 +194,9 @@ class ElectronBrowserContext
   // Shared URLLoaderFactory.
   scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory_;
   mojo::Receiver<network::mojom::TrustedURLLoaderAuthClient> auth_client_{this};
+
+  scoped_refptr<content::SharedCorsOriginAccessList>
+      shared_cors_origin_access_list_;
 
   network::mojom::SSLConfigPtr ssl_config_;
   mojo::Remote<network::mojom::SSLConfigClient> ssl_config_client_;
